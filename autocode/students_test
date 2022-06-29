@@ -2,6 +2,9 @@ package coverage
 
 import (
 	"os"
+	"reflect"
+	"testing"
+	"time"
 )
 
 // DO NOT EDIT THIS FUNCTION
@@ -18,3 +21,156 @@ func init() {
 
 // WRITE YOUR CODE BELOW
 
+var matrix = Matrix{
+	rows: 3,
+	cols: 2,
+	data: []int{11, 12, 21, 22, 31, 32},
+}
+
+func TestPeople_Len(t *testing.T) {
+	testCases := []struct {
+		people         People
+		expectedLength int
+	}{
+		{people: []Person{{}, {}, {}}, expectedLength: 3},
+		{people: []Person{}, expectedLength: 0},
+		{people: nil, expectedLength: 0},
+	}
+	
+	for i, c := range testCases {
+		got := c.people.Len()
+		if got != c.expectedLength {
+			t.Errorf("case [%v] expected: %v, have got: %v", i, c.expectedLength, got)
+		}
+	}
+}
+
+func TestPeople_Swap(t *testing.T) {
+	exp1 := Person{
+		firstName: "g",
+		lastName:  "k",
+		birthDay:  time.Date(1990, 1, 1, 0, 0, 0, 0, time.Local),
+	}
+	exp2 := Person{
+		firstName: "e",
+		lastName:  "b",
+		birthDay:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.Local),
+	}
+	people := People{exp2, exp1}
+	people.Swap(0, 1)
+	got1, got2 := people[0], people[1]
+	if exp1 != got1 || exp2 != got2 {
+		t.Errorf("swap hasn't worked as expected")
+	}
+}
+
+func TestPeople_Less(t *testing.T) {
+	var people People = People{
+		{firstName: "a", lastName: "a", birthDay: time.Date(2000, 1, 1, 0, 0, 0, 0, time.Local)},
+		{firstName: "a", lastName: "a", birthDay: time.Date(2000, 1, 1, 0, 0, 0, 0, time.Local)},
+		{firstName: "a", lastName: "a", birthDay: time.Date(1990, 1, 1, 0, 0, 0, 0, time.Local)},
+		{firstName: "a", lastName: "b", birthDay: time.Date(2000, 1, 1, 0, 0, 0, 0, time.Local)},
+		{firstName: "b", lastName: "a", birthDay: time.Date(2000, 1, 1, 0, 0, 0, 0, time.Local)},
+		{firstName: "a", lastName: "a", birthDay: time.Date(2005, 1, 1, 0, 0, 0, 0, time.Local)},
+	}
+	exp := []bool{false, true, true, true, false}
+	for j := 1; j < len(people); j++ {
+		if people.Less(0, j) != exp[j-1] {
+			t.Errorf("wrong result: [0] and [%v], expected %v", j, exp[j-1])
+		}
+	}
+}
+
+func TestValidStringMatrix_New(t *testing.T) {
+	str := `    1 2 3 4
+5 6 7 8
+9 10 11 12`
+	exp := Matrix{
+		rows: 3,
+		cols: 4,
+		data: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	}
+	got, err := New(str)
+	if err == nil && !got.Equals(exp) {
+		t.Errorf("matrices differ")
+	}
+}
+
+func TestDifColsLen_New(t *testing.T) {
+	str := "0 1\n2"
+	got, err := New(str)
+	if got != nil || err == nil {
+		t.Errorf("expected error")
+	}
+}
+
+func TestInitLettersMatrix_New(t *testing.T) {
+	str := "1 e9 r"
+	got, _ := New(str)
+	if got != nil {
+		t.Errorf("matrix should be created only with digits")
+	}
+}
+
+func (m Matrix) Equals(m2 Matrix) bool {
+	if len(m.data) != len(m2.data) {
+		return false
+	}
+	for i, v := range m.data {
+		if v != m2.data[i] {
+			return false
+		}
+	}
+	return m.rows == m2.rows && m.cols == m2.cols
+}
+
+func TestMatrix_Cols(t *testing.T) {
+	exp := [][]int{
+		{11, 21, 31},
+		{12, 22, 32},
+	}
+	got := matrix.Cols()
+	if !reflect.DeepEqual(exp, got) {
+		t.Errorf("method Cols() doesn't work")
+	}
+}
+
+func TestMatrix_Rows(t *testing.T) {
+	exp := [][]int{
+		{11, 12},
+		{21, 22},
+		{31, 32},
+	}
+	got := matrix.Rows()
+	if !reflect.DeepEqual(exp, got) {
+		t.Errorf("Rows() doesn't work properly")
+	}
+}
+
+func TestMatrixNot_Set(t *testing.T) {
+	tCases := []struct {
+		row, col, value int
+	}{
+		{row: -1, col: 0, value: 100},
+		{row: 0, col: -1, value: 101},
+		{row: 6, col: 0, value: 102},
+		{row: 0, col: 6, value: 103},
+	}
+	for i, tCase := range tCases {
+		isSet := matrix.Set(tCase.row, tCase.col, tCase.value)
+		if isSet {
+			t.Errorf("error in case [%v]", i)
+		}
+	}
+}
+
+func TestMatrix_Set(t *testing.T) {
+	row, col, value := 1, 1, 105
+	isSet := matrix.Set(row, col, value)
+	if !isSet {
+		t.Errorf("wrong conditions")
+	}
+	if matrix.data[row*matrix.cols+col] != value {
+		t.Errorf("value expected to be %v", value)
+	}
+}
